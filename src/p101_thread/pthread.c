@@ -289,7 +289,7 @@ int p101_pthread_create(const struct p101_env *env, struct p101_error *err, pthr
     detach_state = PTHREAD_CREATE_JOINABLE;
     if(attr != NULL)
     {
-        ret_val = pthread_attr_getdetachstate(attr, &detach_state);
+        ret_val = p101_pthread_attr_getdetachstate(env, err, attr, &detach_state);
         if(ret_val != 0)
         {
             P101_ERROR_RAISE_ERRNO(err, ret_val);

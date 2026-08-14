@@ -76,8 +76,8 @@ p101_sem_post	c:@F@p101_sem_post	fault	test/test_fault_wrappers_p101_sync_semaph
 p101_sem_trywait	c:@F@p101_sem_trywait	fault	test/test_fault_wrappers_p101_sync_semaphore.c
 p101_sem_unlink	c:@F@p101_sem_unlink	fault	test/test_fault_wrappers_p101_sync_semaphore.c
 p101_sem_wait	c:@F@p101_sem_wait	fault	test/test_fault_wrappers_p101_sync_semaphore.c
-p101_pthread_equal	c:@F@p101_pthread_equal	behavior	test/test_behavior.c
-p101_pthread_exit	c:@F@p101_pthread_exit	behavior	test/test_behavior.c
-p101_pthread_getspecific	c:@F@p101_pthread_getspecific	behavior	test/test_behavior.c
-p101_pthread_self	c:@F@p101_pthread_self	behavior	test/test_behavior.c
-p101_pthread_testcancel	c:@F@p101_pthread_testcancel	behavior	test/test_behavior.c
+p101_pthread_equal	c:@F@p101_pthread_equal	behavior-existing	test/thread/test_behavior.c
+p101_pthread_exit	c:@F@p101_pthread_exit	behavior-existing	test/thread/test_behavior.c
+p101_pthread_getspecific	c:@F@p101_pthread_getspecific	behavior-existing	test/thread/test_behavior.c
+p101_pthread_self	c:@F@p101_pthread_self	behavior-existing	test/thread/test_behavior.c
+p101_pthread_testcancel	c:@F@p101_pthread_testcancel	behavior-existing	test/thread/test_behavior.c
