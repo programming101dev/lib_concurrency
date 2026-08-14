@@ -1,0 +1,21 @@
+set(PROJECT_NAME "p101_concurrency")
+set(PROJECT_VERSION "0.0.1")
+set(PROJECT_DESCRIPTION "Thread lifecycle and synchronization libraries")
+set(PROJECT_LANGUAGE "C")
+
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+
+set(STANDARD_FLAGS -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 -Werror)
+set(DARWIN_STANDARD_FLAGS -D_DARWIN_C_SOURCE)
+set(LINUX_STANDARD_FLAGS -D_GNU_SOURCE)
+set(BSD_STANDARD_FLAGS -D_BSD_SOURCE -D__BSD_VISIBLE)
+
+set(LIBRARY_TARGETS p101_thread p101_sync)
+set(p101_thread_SOURCES src/p101_thread/pthread.c src/p101_thread/signal.c)
+set(p101_thread_HEADERS include/p101_thread/p101_pthread.h include/p101_thread/p101_signal.h)
+set(p101_thread_LINK_LIBRARIES p101_error p101_env p101_c)
+set(p101_sync_SOURCES src/p101_sync/pthread.c src/p101_sync/semaphore.c)
+set(p101_sync_HEADERS include/p101_sync/p101_pthread.h include/p101_sync/p101_semaphore.h)
+set(p101_sync_LINK_LIBRARIES p101_error p101_env p101_c p101_thread)
