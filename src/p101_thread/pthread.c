@@ -90,10 +90,19 @@ static void pthread_track_join_wait(const struct p101_env *env, p101_env_resourc
     p101_env_track_resource(env, event, P101_RESOURCE_CLASS_PTHREAD_JOIN_WAIT, current_id, target_id, 0U, current_id, file_name, function_name, line_number);
 }
 
+static void pthread_track_terminal_attempt(const struct p101_env *env, pthread_t target, const char *file_name, const char *function_name, int line_number)
+{
+    char target_id[P101_THREAD_METADATA_SIZE];
+
+    p101_pthread_resource_metadata(env, target, target_id, sizeof(target_id));
+    p101_env_track_resource(env, P101_ENV_RESOURCE_USE, P101_RESOURCE_CLASS_PTHREAD_TERMINAL_ATTEMPT, target_id, NULL, 0U, NULL, file_name, function_name, line_number);
+}
+
 #define P101_PTHREAD_TRACK_JOINABLE_ACQUIRE(env, thread) pthread_track_joinable((env), P101_ENV_RESOURCE_ACQUIRE, (thread), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_JOINABLE_RELEASE(env, thread) pthread_track_joinable((env), P101_ENV_RESOURCE_RELEASE, (thread), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_JOIN_WAIT_ACQUIRE(env, thread) pthread_track_join_wait((env), P101_ENV_RESOURCE_ACQUIRE, (thread), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_JOIN_WAIT_RELEASE(env, thread) pthread_track_join_wait((env), P101_ENV_RESOURCE_RELEASE, (thread), __FILE__, __func__, __LINE__)
+#define P101_PTHREAD_TRACK_TERMINAL_ATTEMPT(env, thread) pthread_track_terminal_attempt((env), (thread), __FILE__, __func__, __LINE__)
 
 /* cppcheck-suppress funcArgNamesDifferentUnnamed */
 int p101_pthread_atfork(const struct p101_env *env, struct p101_error *err, void (*prepare)(void), void (*parent)(void), void (*child)(void))
@@ -324,6 +333,7 @@ int p101_pthread_detach(const struct p101_env *env, struct p101_error *err, pthr
 
     P101_TRACE(env);
     P101_WRAPPER_FAULT_RETURN_CODE(env, err, ret_val);
+    P101_PTHREAD_TRACK_TERMINAL_ATTEMPT(env, thread);
     errno   = 0;
     ret_val = pthread_detach(thread);
 
@@ -378,6 +388,7 @@ int p101_pthread_join(const struct p101_env *env, struct p101_error *err, pthrea
 
     P101_TRACE(env);
     P101_WRAPPER_FAULT_RETURN_CODE(env, err, ret_val);
+    P101_PTHREAD_TRACK_TERMINAL_ATTEMPT(env, thread);
     P101_PTHREAD_TRACK_JOIN_WAIT_ACQUIRE(env, thread);
     errno   = 0;
     ret_val = pthread_join(thread, value_ptr);

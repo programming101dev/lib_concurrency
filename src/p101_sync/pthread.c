@@ -80,12 +80,42 @@ static void pthread_track_thread_pointer_resource(const struct p101_env *env, p1
     p101_env_track_resource(env, event, resource_class, resource_id, NULL, 0U, metadata, file_name, function_name, line_number);
 }
 
+static void pthread_track_condition_wait(const struct p101_env *env, p101_env_resource_kind event, const pthread_cond_t *condition, const pthread_mutex_t *mutex, const char *file_name, const char *function_name, int line_number)
+{
+    char      condition_id[P101_MUTEX_OWNER_ID_SIZE];
+    char      metadata[P101_THREAD_METADATA_SIZE];
+    char      mutex_id[P101_ENV_POINTER_RESOURCE_ID_SIZE];
+    char      pointer_id[P101_ENV_POINTER_RESOURCE_ID_SIZE];
+    size_t    offset;
+    pthread_t thread;
+
+    thread = p101_pthread_self(env);
+    p101_pthread_resource_metadata(env, thread, metadata, sizeof(metadata));
+    p101_env_pointer_resource_id(pointer_id, sizeof(pointer_id), condition);
+    p101_env_pointer_resource_id(mutex_id, sizeof(mutex_id), mutex);
+    offset = 0U;
+    while(pointer_id[offset] != '\0')
+    {
+        condition_id[offset] = pointer_id[offset];
+        offset++;
+    }
+    condition_id[offset++] = '@';
+    for(size_t index = 0U; metadata[index] != '\0'; index++)
+    {
+        condition_id[offset++] = metadata[index];
+    }
+    condition_id[offset] = '\0';
+    p101_env_track_resource(env, event, P101_RESOURCE_CLASS_PTHREAD_CONDITION_WAIT, condition_id, mutex_id, 0U, metadata, file_name, function_name, line_number);
+}
+
 #define P101_PTHREAD_TRACK_MUTEX_ACQUIRE(env, mutex) pthread_track_thread_pointer_resource((env), P101_ENV_RESOURCE_ACQUIRE, P101_RESOURCE_CLASS_PTHREAD_MUTEX_HELD, (const void *)(mutex), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_MUTEX_RELEASE(env, mutex) pthread_track_thread_pointer_resource((env), P101_ENV_RESOURCE_RELEASE, P101_RESOURCE_CLASS_PTHREAD_MUTEX_HELD, (const void *)(mutex), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_RWLOCK_ACQUIRE(env, rwlock) pthread_track_thread_pointer_resource((env), P101_ENV_RESOURCE_ACQUIRE, P101_RESOURCE_CLASS_PTHREAD_RWLOCK_HELD, (const void *)(rwlock), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_RWLOCK_RELEASE(env, rwlock) pthread_track_thread_pointer_resource((env), P101_ENV_RESOURCE_RELEASE, P101_RESOURCE_CLASS_PTHREAD_RWLOCK_HELD, (const void *)(rwlock), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_WAIT_ACQUIRE(env, resource_class, resource) pthread_track_thread_pointer_resource((env), P101_ENV_RESOURCE_ACQUIRE, (resource_class), (const void *)(resource), __FILE__, __func__, __LINE__)
 #define P101_PTHREAD_TRACK_WAIT_RELEASE(env, resource_class, resource) pthread_track_thread_pointer_resource((env), P101_ENV_RESOURCE_RELEASE, (resource_class), (const void *)(resource), __FILE__, __func__, __LINE__)
+#define P101_PTHREAD_TRACK_CONDITION_WAIT_ACQUIRE(env, condition, mutex) pthread_track_condition_wait((env), P101_ENV_RESOURCE_ACQUIRE, (condition), (mutex), __FILE__, __func__, __LINE__)
+#define P101_PTHREAD_TRACK_CONDITION_WAIT_RELEASE(env, condition, mutex) pthread_track_condition_wait((env), P101_ENV_RESOURCE_RELEASE, (condition), (mutex), __FILE__, __func__, __LINE__)
 
 /* cppcheck-suppress funcArgNamesDifferentUnnamed */
 int p101_pthread_cond_broadcast(const struct p101_env *env, struct p101_error *err, pthread_cond_t *cond)
@@ -175,10 +205,10 @@ int p101_pthread_cond_timedwait(const struct p101_env *env, struct p101_error *e
     P101_TRACE(env);
     P101_WRAPPER_FAULT_RETURN_CODE(env, err, ret_val);
     P101_PTHREAD_TRACK_MUTEX_RELEASE(env, mutex);
-    P101_PTHREAD_TRACK_WAIT_ACQUIRE(env, P101_RESOURCE_CLASS_PTHREAD_CONDITION_WAIT, cond);
+    P101_PTHREAD_TRACK_CONDITION_WAIT_ACQUIRE(env, cond, mutex);
     errno   = 0;
     ret_val = pthread_cond_timedwait(cond, mutex, abstime);
-    P101_PTHREAD_TRACK_WAIT_RELEASE(env, P101_RESOURCE_CLASS_PTHREAD_CONDITION_WAIT, cond);
+    P101_PTHREAD_TRACK_CONDITION_WAIT_RELEASE(env, cond, mutex);
     P101_PTHREAD_TRACK_MUTEX_ACQUIRE(env, mutex);
 
     if(ret_val != 0 && ret_val != ETIMEDOUT)
@@ -197,10 +227,10 @@ int p101_pthread_cond_wait(const struct p101_env *env, struct p101_error *err, p
     P101_TRACE(env);
     P101_WRAPPER_FAULT_RETURN_CODE(env, err, ret_val);
     P101_PTHREAD_TRACK_MUTEX_RELEASE(env, mutex);
-    P101_PTHREAD_TRACK_WAIT_ACQUIRE(env, P101_RESOURCE_CLASS_PTHREAD_CONDITION_WAIT, cond);
+    P101_PTHREAD_TRACK_CONDITION_WAIT_ACQUIRE(env, cond, mutex);
     errno   = 0;
     ret_val = pthread_cond_wait(cond, mutex);
-    P101_PTHREAD_TRACK_WAIT_RELEASE(env, P101_RESOURCE_CLASS_PTHREAD_CONDITION_WAIT, cond);
+    P101_PTHREAD_TRACK_CONDITION_WAIT_RELEASE(env, cond, mutex);
     P101_PTHREAD_TRACK_MUTEX_ACQUIRE(env, mutex);
 
     if(ret_val != 0)
